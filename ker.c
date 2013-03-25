@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>
+#include <linux/moduleparam.h>
 #include <linux/seq_file.h>
 #include <linux/jiffies.h>
 #include <linux/proc_fs.h>
@@ -12,9 +13,13 @@ MODULE_AUTHOR("Glebik Stas!!!");
 
 struct proc_dir_entry *My_Proc_File;
 
+static char * sparam = "";
+
+module_param(sparam, charp, 0);
+
 static int
  read_proc(struct seq_file *m, void *v) {
- 	seq_printf(m, "proc func");
+ 	seq_printf(m, "%s\n", sparam);
 	return 0;
 }
 
@@ -41,7 +46,7 @@ static int __init test_init( void )
 		printk(KERN_INFO "Error: Could not initialize /proc/ker\n");
 		return -ENOMEM;
 	} else {
-		printk(KERN_INFO "SUccess!\n");
+		printk(KERN_INFO "Success!\n");
 	}
 
 	return 0;
