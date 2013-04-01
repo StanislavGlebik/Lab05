@@ -24,7 +24,6 @@ struct proc_dir_entry *second_op_proc;
 struct proc_dir_entry *oper_proc;
 
 char buff[BUFFER_MAX_SIZE];
-static int is_device_open = 0;
 
 static char * result = "result";
 module_param(result, charp, 0);
@@ -96,29 +95,85 @@ static const struct file_operations proc_file_fops = {
 };
 
 static ssize_t
-procfs_read(struct file *filp,
+procfs_read_oper(struct file *filp,
 			char *buffer,
 			size_t length,
 			loff_t *offset)
 {
-	/*static int finished = 0;
-
-	printk(KERN_INFO "Read");
-
+	static int finished = 0;
+	char sign;
 
 	if (finished) {
-		printk(KERN_INFO "finished");
 		finished = 0;
 		return 0;
 	}
 
 	finished = 1;
-	if (copy_to_user(buffer, "Hi", 2)) {
+
+	switch(oper_type) {
+		case PLUS:
+			sign = '+';
+			break;
+		case MINUS:
+			sign = '-';
+			break;
+		case DIVIDE:
+			sign = '/';
+			break;
+		default:
+			sign = '*';
+			break;
+	}
+
+	if (copy_to_user(buffer, &sign, 1)) {
 		return -EFAULT;
 	}
-	printk(KERN_INFO "suc");*/
 
-	return 0;
+	return 1;
+}
+
+static ssize_t
+procfs_read_second(struct file *filp,
+			char *buffer,
+			size_t length,
+			loff_t *offset)
+{
+	static int finished = 0;
+
+	printk(KERN_INFO "read second");
+	if (finished) {
+		finished = 0;
+		return 0;
+	}
+
+	finished = 1;
+	if (copy_to_user(buffer, second_oper, strlen(second_oper))) {
+		return -EFAULT;
+	}
+
+	return strlen(second_oper);
+}
+
+static ssize_t
+procfs_read_first(struct file *filp,
+			char *buffer,
+			size_t length,
+			loff_t *offset)
+{
+	static int finished = 0;
+
+	printk(KERN_INFO "read first");
+	if (finished) {
+		finished = 0;
+		return 0;
+	}
+
+	finished = 1;
+	if (copy_to_user(buffer, first_oper, strlen(first_oper))) {
+		return -EFAULT;
+	}
+
+	return strlen(first_oper);
 }
 
 int operation_write(struct file *file, const char * buffer, size_t count,
@@ -205,7 +260,7 @@ static const struct file_operations operation_write_fops = {
 	.open = procfs_open,
 	.release = procfs_release,
 	.write = operation_write,
-	.read = procfs_read,
+	.read = procfs_read_oper,
 };
 
 static const struct file_operations first_operand_write_fops = {
@@ -213,7 +268,7 @@ static const struct file_operations first_operand_write_fops = {
 	.open = procfs_open,
 	.release = procfs_release,
 	.write = first_operand_write,
-	.read = procfs_read,
+	.read = procfs_read_first,
 };
 
 static const struct file_operations second_operand_write_fops = {
@@ -221,7 +276,7 @@ static const struct file_operations second_operand_write_fops = {
 	.open = procfs_open,
 	.release = procfs_release,
 	.write = second_operand_write,
-	.read = procfs_read,
+	.read = procfs_read_second,
 };
 
 static int __init test_init( void )
