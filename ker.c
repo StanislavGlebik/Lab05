@@ -11,15 +11,27 @@
 
 MODULE_AUTHOR("Glebik Stas!!!");
 
-struct proc_dir_entry *My_Proc_File;
+struct proc_dir_entry *result_proc;
+struct proc_dir_entry *first_op_proc;
+struct proc_dir_entry *second_op_proc;
+struct proc_dir_entry *oper_proc;
 
-static char * sparam = "";
 
-module_param(sparam, charp, 0);
+static char * result = "result";
+module_param(result, charp, 0);
+
+static char * first_operand = "first operand";
+module_param(first_operand, charp, 0);
+
+static char * second_operand = "second_operand";
+module_param(second_operand, charp, 0);
+
+static char * operation = "operation";
+module_param(operation, charp, 0);
 
 static int
  read_proc(struct seq_file *m, void *v) {
- 	seq_printf(m, "%s\n", sparam);
+ 	seq_printf(m, "%s\n", "Hello");
 	return 0;
 }
 
@@ -40,9 +52,13 @@ static const struct file_operations proc_file_fops = {
 static int __init test_init( void )
 {
 	printk( KERN_ALERT "ker module loaded\n");
-	My_Proc_File = proc_create("ker", 0, NULL, &proc_file_fops);
+	result_proc = proc_create(result, 0, NULL, &proc_file_fops);
+	first_op_proc = proc_create(first_operand, 0, NULL, &proc_file_fops);
+	second_op_proc = proc_create(second_operand, 0, NULL, &proc_file_fops);
+	oper_proc = proc_create(operation, 0, NULL, &proc_file_fops);
 
-	if (My_Proc_File == NULL) {
+	if (result_proc == NULL || first_op_proc == NULL
+		|| second_op_proc == NULL || oper_proc == NULL) {
 		printk(KERN_INFO "Error: Could not initialize /proc/ker\n");
 		return -ENOMEM;
 	} else {
@@ -54,7 +70,11 @@ static int __init test_init( void )
 
 static void __exit test_exit( void )
 {
-	remove_proc_entry("ker", NULL);
+	remove_proc_entry(result, NULL);
+	remove_proc_entry(first_operand, NULL);	
+	remove_proc_entry(second_operand, NULL);		
+	remove_proc_entry(operation, NULL);		
+
 	printk(KERN_ALERT "ker module is unloaded\n");
 }
 
