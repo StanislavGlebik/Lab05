@@ -26,11 +26,15 @@ module_param(result, charp, 0);
 static char * first_operand = "first operand";
 module_param(first_operand, charp, 0);
 
-static char * second_operand = "second_operand";
+static char * second_operand = "second operand";
 module_param(second_operand, charp, 0);
 
 static char * operation = "operation";
 module_param(operation, charp, 0);
+
+static char oper_type = '+';
+static int first_oper = 0;
+static int second_oper = 0;
 
 static int
  read_proc(struct seq_file *m, void *v) {
@@ -58,7 +62,7 @@ procfs_read(struct file *filp,
 			size_t length,
 			loff_t *offset)
 {
-	static int finished = 0;
+	/*static int finished = 0;
 
 	printk(KERN_INFO "Read");
 
@@ -73,29 +77,57 @@ procfs_read(struct file *filp,
 	if (copy_to_user(buffer, "Hi", 2)) {
 		return -EFAULT;
 	}
-	printk(KERN_INFO "suc");
+	printk(KERN_INFO "suc");*/
 
-	return 2;
+	return 0;
 }
 
-int procfile_write(struct file *file, const char * buffer, size_t count,
+int operation_write(struct file *file, const char * buffer, size_t count,
 					loff_t *data)
 {
-
-	printk(KERN_INFO "write");
 	if (count > BUFFER_MAX_SIZE)
 	{
 		count = BUFFER_MAX_SIZE;
 	}
-	else 
-	{
-		if (copy_from_user(buff, buffer, count)) {
+	
+	if (copy_from_user(buff, buffer, count)) {
 			return -EFAULT;
-		}
 	}
 
 	return count;
 }
+
+int second_operand_write(struct file *file, const char * buffer, size_t count,
+					loff_t *data)
+{
+
+	if (count > BUFFER_MAX_SIZE)
+	{
+		count = BUFFER_MAX_SIZE;
+	}
+
+	if (copy_from_user(buff, buffer, count)) {
+			return -EFAULT;
+	}
+
+	return count;
+}
+int first_operand_write(struct file *file, const char * buffer, size_t count,
+					loff_t *data)
+{
+
+	if (count > BUFFER_MAX_SIZE)
+	{
+		count = BUFFER_MAX_SIZE;
+	}
+
+	if (copy_from_user(buff, buffer, count)) {
+			return -EFAULT;
+	}
+
+	return count;
+}
+
 
 static ssize_t
 procfs_open(struct inode *inode, struct file *file)
@@ -110,11 +142,27 @@ static int procfs_release(struct inode *inode, struct file *file)
 	return SUCCESS;
 }
 
-static const struct file_operations write_fops = {
+static const struct file_operations operation_write_fops = {
 	.owner = THIS_MODULE,
 	.open = procfs_open,
 	.release = procfs_release,
-	.write = procfile_write,
+	.write = operation_write,
+	.read = procfs_read,
+};
+
+static const struct file_operations first_operand_write_fops = {
+	.owner = THIS_MODULE,
+	.open = procfs_open,
+	.release = procfs_release,
+	.write = first_operand_write,
+	.read = procfs_read,
+};
+
+static const struct file_operations second_operand_write_fops = {
+	.owner = THIS_MODULE,
+	.open = procfs_open,
+	.release = procfs_release,
+	.write = second_operand_write,
 	.read = procfs_read,
 };
 
@@ -122,12 +170,9 @@ static int __init test_init( void )
 {
 	printk( KERN_ALERT "ker module loaded\n");
 	result_proc = proc_create(result, 0, NULL, &proc_file_fops);
-	first_op_proc = proc_create(first_operand, 0, NULL, &proc_file_fops);
-	second_op_proc = proc_create(second_operand, 0, NULL, &proc_file_fops);
-	oper_proc = proc_create(operation, 0666, NULL, &write_fops);
-
-	oper_proc->uid = 0;
-	oper_proc->gid = 0;
+	first_op_proc = proc_create(first_operand, 0666, NULL, &first_operand_write_fops);
+	second_op_proc = proc_create(second_operand, 0666, NULL, &second_operand_write_fops);
+	oper_proc = proc_create(operation, 0666, NULL, &operation_write_fops);
 
 	if (result_proc == NULL || first_op_proc == NULL
 		|| second_op_proc == NULL || oper_proc == NULL) {
