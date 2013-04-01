@@ -10,6 +10,12 @@
 
 #define BUFFER_MAX_SIZE 100
 #define SUCCESS 0
+
+#define PLUS 0
+#define MINUS 1
+#define MULTIPLY 2
+#define DIVIDE 3
+
 MODULE_AUTHOR("Glebik Stas!!!");
 
 struct proc_dir_entry *result_proc;
@@ -32,13 +38,41 @@ module_param(second_operand, charp, 0);
 static char * operation = "operation";
 module_param(operation, charp, 0);
 
-static char oper_type = '+';
-static int first_oper = 0;
-static int second_oper = 0;
+static int oper_type = PLUS;
+static char first_oper[BUFFER_MAX_SIZE];
+static char second_oper [BUFFER_MAX_SIZE];
+
+
+static int atoi(char * a) 
+{
+	int res = 0;
+	int i = 0;
+
+	for (i = 0; a[i] != 0; ++i) {
+		if (a[i] >= '0' && a[i] <= '9') {
+			res = res * 10 + a[i] - '0';
+		}
+	}
+	return res;
+}
 
 static int
  read_proc(struct seq_file *m, void *v) {
- 	seq_printf(m, "%s\n", buff);
+ 	switch(oper_type) {
+ 		case PLUS:
+ 		seq_printf(m, "%d\n", atoi(first_oper) + atoi(second_oper));
+ 		break;
+ 		case MINUS:
+ 		seq_printf(m, "%d\n", atoi(first_oper) - atoi(second_oper));
+ 		break;
+ 		case MULTIPLY:
+ 		seq_printf(m, "%d\n", atoi(first_oper) * atoi(second_oper));
+ 		break;
+ 		case DIVIDE:
+ 		seq_printf(m, "%d\n", atoi(first_oper) / atoi(second_oper));
+ 		break;
+ 	}
+
 	return 0;
 }
 
@@ -87,13 +121,32 @@ int operation_write(struct file *file, const char * buffer, size_t count,
 {
 	if (count > BUFFER_MAX_SIZE)
 	{
-		count = BUFFER_MAX_SIZE;
+		count = BUFFER_MAX_SIZE-1;
 	}
 	
 	if (copy_from_user(buff, buffer, count)) {
 			return -EFAULT;
 	}
 
+	if (count > 0) {
+		switch (buff[0]) {
+			case '+':
+			oper_type = PLUS;
+			break;
+			case '-':
+			oper_type = MINUS;
+			break;
+			case '*':
+			oper_type = MULTIPLY;
+			break;
+			case '/':
+			oper_type = DIVIDE;
+			break;
+		}
+	}
+	else {
+		oper_type = PLUS;
+	}
 	return count;
 }
 
@@ -101,12 +154,12 @@ int second_operand_write(struct file *file, const char * buffer, size_t count,
 					loff_t *data)
 {
 
-	if (count > BUFFER_MAX_SIZE)
+	if (count >= BUFFER_MAX_SIZE)
 	{
-		count = BUFFER_MAX_SIZE;
+		count = BUFFER_MAX_SIZE-1;
 	}
 
-	if (copy_from_user(buff, buffer, count)) {
+	if (copy_from_user(second_oper, buffer, count)) {
 			return -EFAULT;
 	}
 
@@ -116,12 +169,12 @@ int first_operand_write(struct file *file, const char * buffer, size_t count,
 					loff_t *data)
 {
 
-	if (count > BUFFER_MAX_SIZE)
+	if (count >= BUFFER_MAX_SIZE)
 	{
-		count = BUFFER_MAX_SIZE;
+		count = BUFFER_MAX_SIZE-1;
 	}
 
-	if (copy_from_user(buff, buffer, count)) {
+	if (copy_from_user(first_oper, buffer, count)) {
 			return -EFAULT;
 	}
 
@@ -173,6 +226,9 @@ static int __init test_init( void )
 	first_op_proc = proc_create(first_operand, 0666, NULL, &first_operand_write_fops);
 	second_op_proc = proc_create(second_operand, 0666, NULL, &second_operand_write_fops);
 	oper_proc = proc_create(operation, 0666, NULL, &operation_write_fops);
+
+	strcpy(first_oper, "0");
+	strcpy(second_oper, "0");
 
 	if (result_proc == NULL || first_op_proc == NULL
 		|| second_op_proc == NULL || oper_proc == NULL) {
