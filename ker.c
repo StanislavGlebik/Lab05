@@ -69,7 +69,7 @@ static int
  		break;
  		case DIVIDE:
  		if (atoi(second_oper) == 0) {
- 			seq_printf(m, "Disivion by zero!");
+ 			seq_printf(m, "Disivion by zero!\n");
  		}
  		else {
  			seq_printf(m, "%d\n", atoi(first_oper) / atoi(second_oper));
@@ -140,7 +140,6 @@ procfs_read_second(struct file *filp,
 {
 	static int finished = 0;
 
-	printk(KERN_INFO "read second");
 	if (finished) {
 		finished = 0;
 		return 0;
@@ -162,7 +161,6 @@ procfs_read_first(struct file *filp,
 {
 	static int finished = 0;
 
-	printk(KERN_INFO "read first");
 	if (finished) {
 		finished = 0;
 		return 0;
