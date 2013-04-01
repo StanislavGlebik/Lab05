@@ -69,7 +69,12 @@ static int
  		seq_printf(m, "%d\n", atoi(first_oper) * atoi(second_oper));
  		break;
  		case DIVIDE:
- 		seq_printf(m, "%d\n", atoi(first_oper) / atoi(second_oper));
+ 		if (atoi(second_oper) == 0) {
+ 			seq_printf(m, "Disivion by zero!");
+ 		}
+ 		else {
+ 			seq_printf(m, "%d\n", atoi(first_oper) / atoi(second_oper));
+ 		}
  		break;
  	}
 
